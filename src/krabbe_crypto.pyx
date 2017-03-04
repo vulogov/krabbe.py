@@ -25,4 +25,9 @@ class PACKET(UserDict.UserDict):
         p.assign(d)
         return p
     def assign(self, d):
-        self.data = d
+        if type(d) == type({}):
+            self.data = d
+        elif type(d) == type(""):
+            self.data = msgpack.loads(decompress(d, self["COMPRESS"]))
+        else:
+            return

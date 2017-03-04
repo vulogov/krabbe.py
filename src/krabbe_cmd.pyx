@@ -17,7 +17,6 @@ class KRABBECMD_GEN:
                                  help="Increase verbosity")
         self.parser.add_argument('N', metavar='N', type=str, nargs='*',
                                  help='Parameters')
-        self.env = ENV(HOME=self.HOME, KRABBE_HOME=self.KRABBE_HOME, KRABBE_KEYRING=self.KEYRING)
         self.ready = True
     def preflight(self):
         if self.env.ready != True:
@@ -27,6 +26,7 @@ class KRABBECMD_GEN:
     def process(self):
         self.args = self.parser.parse_args()
         print self.args
+        self.env = ENV(HOME=self.HOME, KRABBE_HOME=self.args.home, KRABBE_KEYRING=self.args.keyring)
         if len(self.args.N) == 0:
             print "You did not specified the command. Please run %s -h"%sys.argv[0]
             self.ready = False

@@ -3,7 +3,7 @@ include "krabbe.pyx"
 include "krabbe_cmd.pyx"
 include "krabbe_cmd2.pyx"
 
-class KRABBECMD_BROKER(KRABBECMD_GEN, KRABBECMD_KEYRING, KRABBECMD_HELP, KRABBECMD_ZMQ_SUB, KRABBECMD_ZMQ_PUB, KRABBECMD_BUS):
+class KRABBECMD_BROKER(KRABBECMD_GEN, KRABBECMD_KEYRING, KRABBECMD_HELP, KRABBECMD_ZMQ_SUB, KRABBECMD_ZMQ_PUB, KRABBECMD_BUS, KRABBECMD_LOCAL, KRABBECMD_DB):
     def __init__(self):
         self.doc = []
         KRABBECMD_HELP.make_doc(self)
@@ -12,6 +12,8 @@ class KRABBECMD_BROKER(KRABBECMD_GEN, KRABBECMD_KEYRING, KRABBECMD_HELP, KRABBEC
         KRABBECMD_ZMQ_SUB.__init__(self)
         KRABBECMD_ZMQ_PUB.__init__(self)
         KRABBECMD_BUS.__init__(self)
+        KRABBECMD_LOCAL.__init__(self)
+        KRABBECMD_DB.__init__(self)
     def preflight(self):
         if KRABBECMD_GEN.preflight(self) != True:
             print "General pre-flight check had failed. Exit"
