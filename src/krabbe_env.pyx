@@ -33,7 +33,6 @@ class ENV(UserDict.UserDict):
         self.ready = True
         return True
     def prepare_env(self):
-        print 1,self.cfg["KRABBE_HOME"]
         if not check_directory_write(self.cfg["KRABBE_HOME"]):
             try:
                 os.makedirs(self.cfg["KRABBE_HOME"])

@@ -228,3 +228,18 @@ def decompress(data, c=None):
             return (True, "zlib", zlib.decompress(data))
     except:
         return (False, None, data)
+
+def split_list(s, sep=":"):
+    res = []
+    p = s.strip().split(sep)
+    for i in p:
+        res.append(i.strip())
+    return res
+
+def banner(s):
+    try:
+        from pyfiglet import Figlet
+    except ImportError:
+        return s
+    f = Figlet()
+    return f.renderText(s)

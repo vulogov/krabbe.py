@@ -2,23 +2,44 @@ import argparse
 import os
 import sys
 
-class KRABBECMD_GEN:
+class KRABBECMD_GEN(object):
     def __init__(self, _desc, _epilog):
         _e = _epilog + ". Type: %s help for the general help"%sys.argv[0]
+        self.BANNER="GENERIC"
         self.HOME = get_from_env("HOME", default="/tmp")
         self.KRABBE_HOME = get_from_env("KRABBE_HOME", default="%s/.krabbe"%self.HOME)
         self.KEYRING = get_from_env("KRABBE_KEYRING", default="%s/keyring"%self.KRABBE_HOME)
+        self.KEYNAME = get_from_env("KRABBE_DEFAULT_KEYNAME", default="default")
+        self.BEAN_HOST = get_from_env("KRABBE_BEANSTALK_ADDRESS", default="127.0.0.1")
+        try:
+            self.BEAN_PORT = int(get_from_env("KRABBE_BEANSTALK_PORT", default="11300"))
+        except KeyboardInterrupt:
+            self.BEAN_PORT = 11300
         self.parser = argparse.ArgumentParser(prog='krbbrocker', description=_desc, epilog=_e)
         self.parser.add_argument("--home", "-H", type=str, default=self.KRABBE_HOME,
                                  help="Location for the KRABBE HOME directory")
         self.parser.add_argument("--keyring", "-R", type=str, default=self.KEYRING,
                                  help="Path to the KEYRING file")
+        self.parser.add_argument("--keyname", "-k", type=str, default=self.KEYNAME,
+                                 help="Path to the KEYRING file")
         self.parser.add_argument("-v",  action="count",
                                  help="Increase verbosity")
+        self.parser.add_argument("--beanstalk-address", type=str, default=self.BEAN_HOST,
+                                 help="IP address of the Beanstalk server")
+        self.parser.add_argument("--beanstalk-port", type=int, default=self.BEAN_PORT,
+                                 help="Beanstalk server port")
+        self.parser.add_argument("--banner", action="store_true", help="Display banner during start")
         self.parser.add_argument('N', metavar='N', type=str, nargs='*',
                                  help='Parameters')
         self.ready = True
+    def _mkbanner(self):
+        return ""
+    def banner(self):
+        b = banner(self.BANNER)
+        b += self._mkbanner()
+        print b
     def preflight(self):
+        print "Preflight 2"
         if self.env.ready != True:
             self.ready = False
             return False
@@ -26,7 +47,12 @@ class KRABBECMD_GEN:
     def process(self):
         self.args = self.parser.parse_args()
         print self.args
-        self.env = ENV(HOME=self.HOME, KRABBE_HOME=self.args.home, KRABBE_KEYRING=self.args.keyring)
+        self.env = ENV(HOME=self.HOME, KRABBE_HOME=self.args.home, KRABBE_KEYRING=self.args.keyring,
+                       BEANSTALK_ADDRESS=self.args.beanstalk_address, BEANSTALK_PORT=self.args.beanstalk_port,
+                       DBPATH=self.args.dbpath, KEYNAME=self.args.keyname)
+        self.main_preflight()
+        if self.args.banner:
+            self.banner()
         if len(self.args.N) == 0:
             print "You did not specified the command. Please run %s -h"%sys.argv[0]
             self.ready = False
@@ -59,10 +85,10 @@ class KRABBECMD_HELP:
         "<command name> help - help abou specific command
         """
     def HELP(self):
-        print "*"*80
+        print "/"+"*"*78+"+"
         for d in self.doc:
-            print ": %-20s : %-60s :"%d
-        print "*"*80
+            print ": %-20s : %-53s :"%d
+        print "+"+"*"*78+"+"
 
 
 class KRABBECMD_KEYRING:
