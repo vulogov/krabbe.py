@@ -1,5 +1,6 @@
 import os
 import UserDict
+import copy
 
 class CFG(UserDict.UserDict):
     def __init__(self, d={}, **kw):
@@ -20,6 +21,7 @@ class ENV(UserDict.UserDict):
         self.ready = False
         self.params = kw
         self.ready = self.reload()
+        self.forbidden_keys = ["HOME","KRABBE_HOME","KRABBE_KEYRING", "WELCOME_LISTEN", "LISTEN", "DBPATH", "LOCAL"]
     def reload(self):
         self.cfg = CFG(self.params)
         self.cfg.add_missing("HOME", self.params, "/tmp")
@@ -46,3 +48,9 @@ class ENV(UserDict.UserDict):
         except KeyboardInterrupt:
             return False
         return True
+    def gen_env_packet(self):
+        e = PACKET(self)
+        for i in self.cfg.keys():
+            if i not in self.forbidden_keys:
+                e[i] = self.cfg[i]
+        return e

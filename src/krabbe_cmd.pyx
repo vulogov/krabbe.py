@@ -33,11 +33,32 @@ class KRABBECMD_GEN(object):
                                  help='Parameters')
         self.ready = True
     def _mkbanner(self):
-        return ""
+        res = ""
+        keys = self.env.cfg.keys()
+        keys.sort()
+        for k in keys:
+            res += "%-28s : %-60s :\n"%(k,repr(self.env.cfg[k]))
+        return res
     def banner(self):
         b = banner(self.BANNER)
         b += self._mkbanner()
         print b
+    def _main_preflight(self):
+        self._call_hiera("preflight", "Preflight check in %s is failed")
+    def _call_hiera(self, name, err_msg):
+        for b in self.__class__.__bases__:
+            try:
+                m = getattr(b, name)
+            except AttributeError:
+                continue
+            if m != None:
+                try:
+                    res = apply(m, (self,), {})
+                except:
+                    res = False
+            if res == False:
+                print err_msg%b.__name__
+                sys.exit(98)
     def preflight(self):
         print "Preflight 2"
         if self.env.ready != True:
@@ -79,6 +100,7 @@ class KRABBECMD_HELP:
     def make_doc(self):
         self.doc.append(("help", "Get help about comamnds"))
         self.doc.append(("<command> help", "Get help about particular comamnds"))
+        return True
     def HELP_HELP(self):
         print """Receive the general help about commands or the particular command:
         "help" - list of the available commands
@@ -98,6 +120,7 @@ class KRABBECMD_KEYRING:
         self.doc.append(("install_certificate", "Install certificate in the key ring."))
         self.doc.append(("delete_certificate", "remove certificate from the ring."))
         self.doc.append(("list", "Show the contect of the keyring"))
+        return True
     def HELP_INSTALL_PRIVATE(self):
         print """Install private key into a keyring file:
         install_private <private key filename #1> ...

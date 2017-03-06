@@ -12,9 +12,13 @@ class PACKET(UserDict.UserDict):
         self["DATA"] = None
         self["COMPRESS"] = "zlib"
     def envelope(self, pkt, **kw):
-        self["DATA"] = pkt.envelope_dumps(self)
-        self["SIGNATURE"] = self.enc.keyring.sign(self.env.KEYNAME, self["DATA"])
-        self["KEYNAME"] = self.env.keyring
+        dump_status, zalgo, data = pkt.envelope_dumps()
+        if dump_status != True:
+            return False
+        self["DATA"] = data
+        self["SIGNATURE"] = self.env.keyring.sign(self.env.cfg["KEYNAME"], self["DATA"])
+        self["KEYNAME"] = self.env.cfg["KEYNAME"]
+        return True
     def envelope_dumps(self):
         return compress(msgpack.dumps(self.data), ["zlib"])
     def envelope_loads(self):
