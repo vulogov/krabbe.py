@@ -15,6 +15,7 @@ class KRABBECMD_GEN(object):
             self.BEAN_PORT = int(get_from_env("KRABBE_BEANSTALK_PORT", default="11300"))
         except KeyboardInterrupt:
             self.BEAN_PORT = 11300
+        self.DEFFRQ = get_from_env("KRABBE_BEANSTALK_PORT", default="15")
         self.parser = argparse.ArgumentParser(prog='krbbrocker', description=_desc, epilog=_e)
         self.parser.add_argument("--home", "-H", type=str, default=self.KRABBE_HOME,
                                  help="Location for the KRABBE HOME directory")
@@ -28,7 +29,10 @@ class KRABBECMD_GEN(object):
                                  help="IP address of the Beanstalk server")
         self.parser.add_argument("--beanstalk-port", type=int, default=self.BEAN_PORT,
                                  help="Beanstalk server port")
+        self.parser.add_argument("--frq", type=str, default=self.DEFFRQ,
+                                 help="Default frequence for the recurring operations")
         self.parser.add_argument("--banner", action="store_true", help="Display banner during start")
+
         self.parser.add_argument('N', metavar='N', type=str, nargs='*',
                                  help='Parameters')
         self.ready = True
@@ -61,6 +65,11 @@ class KRABBECMD_GEN(object):
                 sys.exit(98)
     def preflight(self):
         print "Preflight 2"
+        try:
+            import humanfriendly
+            self.env.cfg["DEFFRQ"] = humanfriendly.parse_timespan(self.args.frq)
+        except KeyboardInterrupt:
+            self.env.cfg["DEFFRQ"] = 5
         if self.env.ready != True:
             self.ready = False
             return False

@@ -21,7 +21,7 @@ class ENV(UserDict.UserDict):
         self.ready = False
         self.params = kw
         self.ready = self.reload()
-        self.forbidden_keys = ["HOME","KRABBE_HOME","KRABBE_KEYRING", "WELCOME_LISTEN", "LISTEN", "DBPATH", "LOCAL"]
+        self.forbidden_keys = ["HOME","KRABBE_HOME","KRABBE_KEYRING", "WELCOME_LISTEN", "LISTEN", "DBPATH", "LOCAL", "DEFFRQ"]
     def reload(self):
         self.cfg = CFG(self.params)
         self.cfg.add_missing("HOME", self.params, "/tmp")

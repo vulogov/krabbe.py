@@ -1,3 +1,6 @@
+from gevent import monkey
+monkey.patch_all()
+import gevent
 include "krabbe_constants.pyi"
 include "krabbe_lib.pyx"
 include "krabbe_keyring.pyx"
