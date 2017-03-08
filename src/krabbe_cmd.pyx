@@ -23,53 +23,56 @@ class KRABBECMD_GEN(object):
                                  help="Path to the KEYRING file")
         self.parser.add_argument("--keyname", "-k", type=str, default=self.KEYNAME,
                                  help="Path to the KEYRING file")
-        self.parser.add_argument("-v",  action="count",
-                                 help="Increase verbosity")
         self.parser.add_argument("--beanstalk-address", type=str, default=self.BEAN_HOST,
                                  help="IP address of the Beanstalk server")
         self.parser.add_argument("--beanstalk-port", type=int, default=self.BEAN_PORT,
                                  help="Beanstalk server port")
         self.parser.add_argument("--frq", type=str, default=self.DEFFRQ,
                                  help="Default frequence for the recurring operations")
+        self.parser.add_argument("--timeout", type=int, default=5,
+                                 help="Timeout for the network operations")
         self.parser.add_argument("--banner", action="store_true", help="Display banner during start")
 
         self.parser.add_argument('N', metavar='N', type=str, nargs='*',
                                  help='Parameters')
         self.ready = True
     def _mkbanner(self):
-        res = ""
-        keys = self.env.cfg.keys()
-        keys.sort()
-        for k in keys:
-            res += "%-28s : %-60s :\n"%(k,repr(self.env.cfg[k]))
-        return res
+        return str_dict(self.env.cfg)
     def banner(self):
-        b = banner(self.BANNER)
+        b = color(banner(self.BANNER), "magenta")
         b += self._mkbanner()
         print b
+        self.important("VERSION %s"%KRABBE_VERSION)
     def _main_preflight(self):
         self._call_hiera("preflight", "Preflight check in %s is failed")
     def _call_hiera(self, name, err_msg):
+        visited = []
         for b in self.__class__.__bases__:
+            if b.__name__ in visited:
+                continue
+            else:
+                visited.append(b.__name__)
             try:
                 m = getattr(b, name)
             except AttributeError:
                 continue
             if m != None:
                 try:
+                    self.ok("Calling preflight in %s"%b.__name__)
                     res = apply(m, (self,), {})
                 except:
                     res = False
             if res == False:
-                print err_msg%b.__name__
+                self.error(err_msg%b.__name__)
                 sys.exit(98)
     def preflight(self):
-        print "Preflight 2"
         try:
             import humanfriendly
-            self.env.cfg["DEFFRQ"] = humanfriendly.parse_timespan(self.args.frq)
-        except KeyboardInterrupt:
-            self.env.cfg["DEFFRQ"] = 5
+        except ImportError:
+            self.important("Module 'humanfriendly' not found. Many parameters will be defaulted")
+        self.env.cfg["DEFFRQ"] = dehumanize_time(self.args.frq, 5)
+        self.env.cfg["WORKERS"] = self.args.workers
+        self.env.cfg["TIMEOUT"] = self.args.timeout
         if self.env.ready != True:
             self.ready = False
             return False
@@ -77,6 +80,7 @@ class KRABBECMD_GEN(object):
     def process(self):
         self.args = self.parser.parse_args()
         print self.args
+        self._call_hiera("make_doc", "Error creating documentation in %s")
         self.env = ENV(HOME=self.HOME, KRABBE_HOME=self.args.home, KRABBE_KEYRING=self.args.keyring,
                        BEANSTALK_ADDRESS=self.args.beanstalk_address, BEANSTALK_PORT=self.args.beanstalk_port,
                        DBPATH=self.args.dbpath, KEYNAME=self.args.keyname)
@@ -84,7 +88,7 @@ class KRABBECMD_GEN(object):
         if self.args.banner:
             self.banner()
         if len(self.args.N) == 0:
-            print "You did not specified the command. Please run %s -h"%sys.argv[0]
+            self.error("You did not specified the command. Please run %s -h"%sys.argv[0])
             self.ready = False
             return False
         if len(self.args.N) > 1 and self.args.N[1].upper() == "HELP":
@@ -92,7 +96,7 @@ class KRABBECMD_GEN(object):
         else:
             cmd = getattr(self, self.args.N[0].upper(), None)
         if cmd == None:
-            print "Command %s not found"%self.args.N[0]
+            self.error("Command %s not found"%self.args.N[0])
             self.ready = False
             return False
         try:

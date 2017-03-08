@@ -7,6 +7,7 @@ class KRABBECMD_BUS:
         self.FF = get_from_env("KRABBE_FEDERATION_FILTER", default="*")
         self.NODENAME = get_from_env("KRABBE_NODENAME", default=socket.gethostname())
         self.NODEID = get_from_env("KRABBE_NODEID", default=str(uuid.uuid4()))
+        self.DISCARDAFTER = get_from_env("KRABBE_DISCARD_AFTER", default="5m")
         try:
             self.OFF = int(get_from_env("KRABBE_TIME_OFFSET", default="0"))
         except:
@@ -21,6 +22,10 @@ class KRABBECMD_BUS:
                                  help="Filter pattern for the KRABBE BUS Federation membership")
         self.parser.add_argument("--offset", type=int, default=self.OFF,
                                  help="Offset applied to the local clock translated to a BUS")
+        self.parser.add_argument("--discard-after", type=str, default=self.DISCARDAFTER,
+                                 help="Discard old packets after specified timerange")
+    def preflight(self):
+        self.env.cfg["DISCARD_AFTER"] = dehumanize_time(self.args.discard_after, 600)
     def make_doc(self):
         self.doc.append(("json_local_node", "Send localnode discovery packet to <stdout>"))
         self.doc.append(("display_adv_packet", "Send localnode wire discovery packet to <stdout>"))

@@ -4,6 +4,8 @@
 import os
 import posixpath
 import fnmatch
+import gevent
+from apscheduler.schedulers.gevent import GeventScheduler
 
 def rchop(thestring, ending):
     """Chopping a string ending:
@@ -236,6 +238,18 @@ def split_list(s, sep=":"):
         res.append(i.strip())
     return res
 
+def list_rotate(_list, n=1):
+    return _list[n:] + _list[:n]
+
+def list2(b, n, l=[]):
+    if len(l) == n:
+        return l
+    if len(l) == 0:
+        return list2(b, n, [b, ])
+    else:
+        l.append(l[-1] * 2)
+        return list2(b, n, l)
+
 def banner(s):
     try:
         from pyfiglet import Figlet
@@ -243,3 +257,35 @@ def banner(s):
         return s
     f = Figlet()
     return f.renderText(s)
+
+def dehumanize_time(_str, _default):
+    try:
+        import humanfriendly
+        return humanfriendly.parse_timespan(_str)
+    except KeyboardInterrupt:
+        return _default
+
+
+class SCHEDULER(GeventScheduler):
+    def __init__(self):
+        GeventScheduler.__init__(self)
+        self.is_scheduled_tasks = False
+    def every(self, _intrv, _callable):
+        self.add_job(_callable, "interval", seconds=_intrv)
+        self.is_scheduled_tasks = True
+
+
+class TASKS:
+    def __init__(self):
+        self.tasks = {"scheduler":None}
+        self.scheduler = SCHEDULER()
+    def spawn(self, name, _callable):
+        if name not in self.tasks.keys():
+            self.tasks[name] = gevent.spawn(_callable)
+    def run(self, *_tasks):
+        if self.scheduler.is_scheduled_tasks:
+            self.tasks["scheduler"] = self.scheduler.start()
+        tasks = list(self.tasks.values())
+        for t in _tasks:
+            tasks += list(t.tasks.values())
+        gevent.joinall(tasks)
