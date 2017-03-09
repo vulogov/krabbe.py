@@ -5,15 +5,12 @@ class KRABBECMD_BUS:
     def __init__(self):
         self.F = get_from_env("KRABBE_FEDERATION", default="default")
         self.FF = get_from_env("KRABBE_FEDERATION_FILTER", default="*")
-        self.NODENAME = get_from_env("KRABBE_NODENAME", default=socket.gethostname())
         self.NODEID = get_from_env("KRABBE_NODEID", default=str(uuid.uuid4()))
         self.DISCARDAFTER = get_from_env("KRABBE_DISCARD_AFTER", default="5m")
         try:
             self.OFF = int(get_from_env("KRABBE_TIME_OFFSET", default="0"))
         except:
             self.OFF = 0
-        self.parser.add_argument("--nodename", "-N", type=str, default=self.NODENAME,
-                                 help="Node name")
         self.parser.add_argument("--nodeid", "-I", type=str, default=self.NODEID,
                                  help="Unique Node ID")
         self.parser.add_argument("--federation", "-F", type=str, default=self.F,
@@ -75,6 +72,17 @@ class KRABBECMD_LOCAL:
 
 class KRABBECMD_DB:
     def __init__(self):
-        self.DBPATH = get_from_env("KRABBE_DBPATH", default="%s/db/")
-        self.parser.add_argument("--dbpath", "-D", type=str, default=self.LOCAL,
+        self.DBPATH = get_from_env("KRABBE_DBPATH", default="%s/db/"%self.KRABBE_HOME)
+        self.DBTYPE = get_from_env("KRABBE_DBTYPE", default="lmdb")
+        self.parser.add_argument("--dbpath", "-D", type=str, default=self.DBPATH,
                              help="Path to the local KRABBE database")
+        self.parser.add_argument("--dbtype", type=str, default=self.DBTYPE, choices=["lmdb",],
+                                 help="Type of the local KRABBE database")
+    def preflight(self):
+        self.env.cfg["KRABBE_DBPATH"] = self.args.dbpath
+        self.env.cfg["KRABBE_DBTYPE"] = self.args.dbtype
+        self.env.db = KRABBE_DB(self.env, self)
+        if not self.env.db.isReady():
+            self.error("Can not initialize or open database. Exit.")
+            return False
+        return True

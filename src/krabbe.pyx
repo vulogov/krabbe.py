@@ -4,6 +4,7 @@ monkey.patch_all()
 import gevent
 include "krabbe_constants.pyi"
 include "krabbe_lib.pyx"
+include "krabbe_db.pyx"
 include "krabbe_keyring.pyx"
 include "krabbe_crypto.pyx"
 include "krabbe_beanstalk.pyx"

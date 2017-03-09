@@ -18,6 +18,7 @@ class CFG(UserDict.UserDict):
 class ENV(UserDict.UserDict):
     def __init__(self, **kw):
         UserDict.UserDict.__init__(self)
+        self.db = None
         self.ready = False
         self.params = kw
         self.ready = self.reload()

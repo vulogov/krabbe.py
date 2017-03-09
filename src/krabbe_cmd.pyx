@@ -11,6 +11,7 @@ class KRABBECMD_GEN(object):
         self.KEYRING = get_from_env("KRABBE_KEYRING", default="%s/keyring"%self.KRABBE_HOME)
         self.KEYNAME = get_from_env("KRABBE_DEFAULT_KEYNAME", default="default")
         self.BEAN_HOST = get_from_env("KRABBE_BEANSTALK_ADDRESS", default="127.0.0.1")
+        self.NODENAME = get_from_env("KRABBE_NODENAME", default=socket.gethostname())
         try:
             self.BEAN_PORT = int(get_from_env("KRABBE_BEANSTALK_PORT", default="11300"))
         except KeyboardInterrupt:
@@ -32,7 +33,8 @@ class KRABBECMD_GEN(object):
         self.parser.add_argument("--timeout", type=int, default=5,
                                  help="Timeout for the network operations")
         self.parser.add_argument("--banner", action="store_true", help="Display banner during start")
-
+        self.parser.add_argument("--nodename", "-N", type=str, default=self.NODENAME,
+                                 help="Node name")
         self.parser.add_argument('N', metavar='N', type=str, nargs='*',
                                  help='Parameters')
         self.ready = True
@@ -60,7 +62,7 @@ class KRABBECMD_GEN(object):
                 try:
                     self.ok("Calling preflight in %s"%b.__name__)
                     res = apply(m, (self,), {})
-                except:
+                except KeyboardInterrupt:
                     res = False
             if res == False:
                 self.error(err_msg%b.__name__)
@@ -83,7 +85,7 @@ class KRABBECMD_GEN(object):
         self._call_hiera("make_doc", "Error creating documentation in %s")
         self.env = ENV(HOME=self.HOME, KRABBE_HOME=self.args.home, KRABBE_KEYRING=self.args.keyring,
                        BEANSTALK_ADDRESS=self.args.beanstalk_address, BEANSTALK_PORT=self.args.beanstalk_port,
-                       DBPATH=self.args.dbpath, KEYNAME=self.args.keyname)
+                       DBPATH=self.args.dbpath, KEYNAME=self.args.keyname, KRABBE_NODENAME=self.args.nodename)
         self.main_preflight()
         if self.args.banner:
             self.banner()
